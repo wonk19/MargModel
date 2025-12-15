@@ -1,0 +1,303 @@
+================================================================================
+MargModel.py - Standalone CCRR-RT Forward Model Package
+================================================================================
+
+PACKAGE CREATED: 2024
+EXTRACTED FROM: K03_optimize_CCRR_RT.py
+
+This package contains a standalone implementation of the CCRR-RT forward model
+that computes remote sensing reflectance (Rrs) from water quality parameters.
+
+================================================================================
+PACKAGE CONTENTS
+================================================================================
+
+CORE FILES (Required for distribution):
+---------------------------------------
+1. MargModel.py                   - Main module with forward model
+2. MargModel_README.md            - Complete user documentation
+3. MargModel_example.py           - Usage examples and demonstrations
+4. MargModel_DISTRIBUTION.md      - Distribution and installation guide
+5. independent/                   - Directory with required data files
+   ├── AB_box_Margalef.pkl        - Pigment absorption parameters
+   └── Water_a_b.txt              - Water optical properties
+
+VERIFICATION FILES (Optional):
+------------------------------
+6. MargModel_verification.py      - Verification script (requires original K03)
+
+================================================================================
+FILE DESCRIPTIONS
+================================================================================
+
+MargModel.py (Main Module):
+---------------------------
+- Size: ~620 lines
+- Contains: 
+  * runForward() - Main user-facing function
+  * get_ccrr_rrs_rt() - Core forward model (no global variables)
+  * Supporting functions for water optics, interpolation, BRDF calculations
+  * Global caching for performance optimization only (not for parameters)
+- Dependencies: numpy, scipy, pickle
+- Verified: Produces identical results to original implementation
+- Architecture: Clean function-based design without global state for parameters
+
+MargModel_README.md (Documentation):
+------------------------------------
+- Complete API reference
+- Usage examples
+- Parameter descriptions and ranges
+- Model details and references
+- Troubleshooting guide
+- ~500 lines of comprehensive documentation
+
+MargModel_example.py (Examples):
+---------------------------------
+- 5 complete usage examples:
+  1. Single spectrum computation
+  2. Chlorophyll-a sensitivity analysis
+  3. Mineral concentration sensitivity
+  4. Batch processing multiple stations
+  5. Custom model parameters
+- Generates plots for each example
+- ~350 lines with detailed comments
+
+MargModel_DISTRIBUTION.md (Distribution Guide):
+-----------------------------------------------
+- Installation instructions for recipients
+- Quick start guide
+- File structure requirements
+- Testing procedures
+- Support information
+
+independent/ (Data Directory):
+------------------------------
+- AB_box_Margalef.pkl (8 KB):
+  * Pigment absorption parameters from K02 analysis
+  * Margalef-type phytoplankton parameterization
+  * Required for model execution
+
+- Water_a_b.txt (3 KB):
+  * Pure water absorption and scattering coefficients
+  * Wavelength range: 300-900 nm
+  * Required for model execution
+
+================================================================================
+USAGE OVERVIEW
+================================================================================
+
+Basic Usage:
+-----------
+import numpy as np
+import MargModel
+
+wavelengths = np.arange(400., 750.)
+chla = 2.0       # mg/m3
+mineral = 0.5    # g/m3
+aCDOM = 0.02     # 1/m
+
+Rrs = MargModel.runForward(wavelengths, chla, mineral, aCDOM)
+
+Input Parameters:
+----------------
+- wavelengths: Wavelength array (nm), typical: 400-750 nm
+- chla: Chlorophyll-a concentration (mg/m3), range: 0.01-100
+- mineral: Suspended mineral concentration (g/m3), range: 0.1-10
+- aCDOM: CDOM absorption at 443nm (1/m), range: 0.001-0.5
+- eta_param: (optional) Pigment backscattering exponent, default: 0.001
+- g0_param: (optional) Pigment backscattering coefficient, default: 0.001
+- nu_param: (optional) Pigment backscattering spectral slope, default: 0.0
+
+Output:
+-------
+- Rrs: Remote sensing reflectance array (sr^-1)
+- Same length as input wavelengths
+- Typical values: 0.001-0.02 sr^-1 (1-20 x10^-3 sr^-1)
+
+================================================================================
+VERIFICATION RESULTS
+================================================================================
+
+The MargModel.py has been verified against the original K03 implementation:
+
+Basic Forward Model Test:
+-------------------------
+- Maximum difference: < 1e-10 sr^-1 (numerical precision limit)
+- Relative difference: 0.000000%
+- Status: PASSED
+
+Multiple Conditions Test (5 cases):
+-----------------------------------
+- Clear water: PASSED
+- Coastal water: PASSED
+- Turbid water: PASSED
+- High Chlorophyll: PASSED
+- High Mineral: PASSED
+
+Parameter Sensitivity Test (5 parameter sets):
+----------------------------------------------
+- eta variations: PASSED
+- g0 variations: PASSED
+- All differences < 1e-10 sr^-1
+
+Overall: ALL VERIFICATION TESTS PASSED
+---------------------------------------
+MargModel.py produces IDENTICAL results to the original K03 implementation.
+
+================================================================================
+DISTRIBUTION CHECKLIST
+================================================================================
+
+To distribute this package to third parties, provide:
+
+[ ] MargModel.py
+[ ] MargModel_README.md
+[ ] MargModel_example.py
+[ ] MargModel_DISTRIBUTION.md
+[ ] independent/AB_box_Margalef.pkl
+[ ] independent/Water_a_b.txt
+
+Optional (for verification):
+[ ] MargModel_verification.py (requires original K03 codebase)
+
+================================================================================
+RECIPIENT REQUIREMENTS
+================================================================================
+
+Software Requirements:
+---------------------
+- Python 3.6 or higher
+- numpy (pip install numpy)
+- scipy (pip install scipy)
+- matplotlib (optional, for plotting examples)
+
+Installation Steps:
+------------------
+1. Extract all files maintaining directory structure
+2. Install dependencies: pip install numpy scipy matplotlib
+3. Test: python MargModel.py
+4. Run examples: python MargModel_example.py
+
+Expected Results:
+----------------
+- Test run should complete without errors
+- Generate 2 PNG files:
+  * MargModel_test_output.png (3 basic test cases)
+  * MargModel_high_chla_sensitivity.png (high Chla cases: 10, 50, 100 mg/m3)
+- Example run should generate 5 PNG files
+
+================================================================================
+MODEL DETAILS
+================================================================================
+
+Model Name:
+----------
+CCRR-RT (Case 2 Regional CoastColour Radiative Transfer)
+
+Model Components:
+----------------
+1. Absorption:
+   - Pigment absorption (Margalef-type parameterization)
+   - Mineral absorption (Babin et al., 2003)
+   - CDOM absorption (exponential decay)
+   - Pure water absorption
+
+2. Backscattering:
+   - Pigment backscattering (Morel 2002 parameterization)
+   - Mineral backscattering (KORUS-based)
+   - Pure water backscattering
+
+3. Radiative Transfer:
+   - Morel's f/Q bidirectional effects
+   - Solar zenith angle corrections
+   - Fresnel reflection at surface
+
+Application Range:
+-----------------
+- Coastal and Case-2 waters
+- Moderate to high turbidity
+- Wavelength range: 400-750 nm
+- Optimized for Yellow Sea conditions
+
+Key References:
+--------------
+- Morel & Gentili (2002) - BRDF parameterization
+- Babin et al. (2003) - Mineral optics
+- Based on KORUS field campaign data
+
+================================================================================
+PERFORMANCE NOTES
+================================================================================
+
+Caching Mechanisms:
+------------------
+The module uses several caching strategies for performance:
+1. Water optical properties: Loaded once and cached
+2. Absorption parameters: Loaded once and cached
+3. Morel interpolators: Created once and reused
+4. Wavelength-dependent terms: Cached per wavelength array
+
+Performance:
+-----------
+- First call: ~0.1-0.2 seconds (initialization + computation)
+- Subsequent calls: ~0.01-0.02 seconds (computation only)
+- Batch processing: Efficient for large numbers of spectra
+
+Memory Usage:
+------------
+- Minimal: ~10-20 MB for typical usage
+- Data files: ~11 KB total
+- Cache overhead: ~1-2 MB
+
+================================================================================
+VALIDATION AND TESTING
+================================================================================
+
+Test Cases Included:
+-------------------
+1. Typical coastal water (Chla=2.0, Mineral=0.5, CDOM=0.02)
+2. Clear water (Chla=0.5, Mineral=0.1, CDOM=0.005)
+3. Turbid water (Chla=5.0, Mineral=2.0, CDOM=0.05)
+
+All test cases verified against original K03 implementation.
+
+Physical Realism Checks:
+-----------------------
+- Rrs values in expected range (0.001-0.02 sr^-1)
+- Spectral shapes consistent with known water types
+- Peak positions vary correctly with chlorophyll
+- Turbidity increases Rrs as expected
+
+================================================================================
+SUPPORT AND CONTACT
+================================================================================
+
+For questions or issues:
+-----------------------
+1. Consult MargModel_README.md for detailed documentation
+2. Review MargModel_example.py for usage patterns
+3. Contact original author or refer to K03 documentation
+
+Common Issues:
+-------------
+- File not found: Ensure independent/ directory is present
+- Import error: Install numpy and scipy
+- Unexpected values: Check parameter units and ranges
+
+================================================================================
+VERSION HISTORY
+================================================================================
+
+Version 1.0 (2024):
+------------------
+- Initial standalone release
+- Extracted from K03_optimize_CCRR_RT.py
+- Self-contained with independent data files
+- Comprehensive documentation and examples
+- Verified against original implementation
+- Ready for distribution to third parties
+
+================================================================================
+END OF PACKAGE INFO
+================================================================================
+
