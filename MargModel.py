@@ -468,7 +468,7 @@ def get_ccrr_rrs_rt(lamb, chla, mine, cdom, fresnel_add, wl_sky, rho_sky, sol_ze
 
 
 def runForward(wavelengths, chla, mineral, aCDOM, 
-               eta_param=0.001, g0_param=0.001, nu_param=0.0,
+               eta_param=0.7, g0_param=0.0002, nu_param=0.0,
                fresnel_add=0.02, rho_sky=None, sol_zen=30.0,
                add_fluorescence_flag=True, fluorescence_method='semilog'):
     """
@@ -591,7 +591,7 @@ def getDefaultParameters():
     --------
     dict : Dictionary containing default eta, g0, nu values
     """
-    return {'eta': 0.001, 'g0': 0.001, 'nu': 0.0}
+    return {'eta': 0.7, 'g0': 0.0002, 'nu': 0.0}
 
 
 if __name__ == "__main__":
