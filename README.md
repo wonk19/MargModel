@@ -126,7 +126,7 @@ Rrs = MargModel.runForward(wavelengths, chla, mineral, aCDOM,
 
 - **sol_zen** : float, optional (default: 30.0)
   - Solar zenith angle in degrees
-  - Note: Currently fixed at 60° internally in the BRDF calculation
+  - Note: Currently fixed at 30° internally in the BRDF calculation
 
 - **add_fluorescence_flag** : bool, optional (default: True)
   - Whether to add chlorophyll fluorescence to Rrs

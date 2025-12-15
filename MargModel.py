@@ -245,7 +245,7 @@ def get_morel_f_over_q(wls, chla, sol_zen_in_degree, method='linear'):
     ffqns : array
         f/Q ratios for each wavelength
     """
-    sol_zen_in_degree = 60.0
+    sol_zen_in_degree = 30.0
     mu0 = np.cos(sol_zen_in_degree / 180.0 * np.pi)
     
     chla_here = chla if chla >= 0.00001 else 0.1
