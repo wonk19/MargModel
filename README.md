@@ -74,7 +74,7 @@ plt.show()
 
 ```python
 Rrs = MargModel.runForward(wavelengths, chla, mineral, aCDOM, 
-                           eta_param=0.001, g0_param=0.001, nu_param=0.0,
+                           eta_param=0.7, g0_param=0.0002, nu_param=0.0,
                            fresnel_add=0.02, rho_sky=None, sol_zen=30.0)
 ```
 
@@ -100,20 +100,20 @@ Rrs = MargModel.runForward(wavelengths, chla, mineral, aCDOM,
   - Typical range: 0.001 - 0.5 (1/m)
   - Controls yellow substance absorption
 
-- **eta_param** : float, optional (default: 0.001)
+- **eta_param** : float, optional (default: 0.7)
   - Pigment backscattering exponent
   - Typical range: 0.0001 - 0.05
-  - From optimization results in K03
+  - Optimized value from K06 analysis: 0.7
 
-- **g0_param** : float, optional (default: 0.001)
+- **g0_param** : float, optional (default: 0.0002)
   - Pigment backscattering coefficient
   - Typical range: 0.0001 - 0.01
-  - From optimization results in K03
+  - Optimized value from K06 analysis: 0.0002
 
 - **nu_param** : float, optional (default: 0.0)
   - Pigment backscattering spectral slope
   - Typical range: 0.0 - 0.1
-  - From optimization results in K03
+  - Optimized value from K06 analysis: 0.0
 
 - **fresnel_add** : float, optional (default: 0.02)
   - Fresnel reflection correction term
@@ -150,7 +150,7 @@ Rrs = MargModel.runForward(wavelengths, chla, mineral, aCDOM,
 
 ```python
 params = MargModel.getDefaultParameters()
-# Returns: {'eta': 0.001, 'g0': 0.001, 'nu': 0.0}
+# Returns: {'eta': 0.7, 'g0': 0.0002, 'nu': 0.0}
 ```
 
 Get default model parameters. These are the default values used if not specified in `runForward()`.
