@@ -392,7 +392,103 @@ For batch processing of many spectra, the first call may be slower due to initia
 
 For questions or issues related to this model, please contact the author or refer to the original K03 optimization pipeline documentation.
 
+## Chlorophyll-a Correction
+
+### Overview
+
+When using the forward model to estimate chlorophyll-a from observed Rrs spectra (inverse problem), the raw estimates may show systematic bias. A 3rd-order polynomial correction in log-space can significantly improve accuracy.
+
+### Correction Function
+
+```python
+chla_corrected = MargModel.apply_chla_correction(chla_est, poly_coeffs)
+```
+
+The correction is applied as:
+```
+log(chla_corrected) = a3*log(chla_est)³ + a2*log(chla_est)² + a1*log(chla_est) + a0
+```
+
+### Recommended Polynomial Coefficients
+
+The polynomial coefficients are parameter-set specific. Below are the top 10 parameter sets based on two criteria:
+
+#### Top 10 by R² (Best Chla Estimation Accuracy)
+
+| Rank | eta   | g0      | nu   | R²     | RMSE_Rrs | poly_a3   | poly_a2   | poly_a1  | poly_a0   |
+|------|-------|---------|------|--------|----------|-----------|-----------|----------|-----------|
+| 1    | 0.500 | 0.00100 | 1.00 | 0.9390 | 0.175120 | 0.101620  | -0.322535 | 1.073302 | -0.221764 |
+| 2    | 0.775 | 0.00020 | 1.00 | 0.9334 | 0.165825 | 0.085890  | -0.210978 | 0.866397 | -0.164719 |
+| 3    | 0.950 | 0.00005 | 1.00 | 0.9332 | 0.145160 | 0.010728  | 0.137408  | 0.352919 | 0.034673  |
+| 4    | 0.650 | 0.00040 | 1.00 | 0.9312 | 0.171452 | 0.083595  | -0.222705 | 0.921967 | -0.201947 |
+| 5    | 0.625 | 0.00040 | 1.00 | 0.9310 | 0.174814 | 0.056867  | -0.099050 | 0.747213 | -0.139404 |
+| 6    | 0.850 | 0.00010 | 1.00 | 0.9302 | 0.154771 | 0.012258  | 0.140254  | 0.334053 | 0.061684  |
+| 7    | 0.600 | 0.00060 | 1.00 | 0.9286 | 0.180918 | 0.047271  | -0.084712 | 0.784730 | -0.150628 |
+| 8    | 0.575 | 0.00060 | 1.00 | 0.9267 | 0.179130 | 0.036921  | -0.030353 | 0.684607 | -0.103030 |
+| 9    | 0.675 | 0.00040 | 0.75 | 0.9252 | 0.181476 | 0.066129  | -0.144183 | 0.815283 | -0.164588 |
+| 10   | 0.675 | 0.00040 | 1.00 | 0.9246 | 0.175862 | 0.075362  | -0.181135 | 0.868817 | -0.173960 |
+
+#### Top 10 by RMSE(Rrs) (Best Spectral Fitting)
+
+| Rank | eta   | g0      | nu   | R²     | RMSE_Rrs | poly_a3   | poly_a2  | poly_a1  | poly_a0  |
+|------|-------|---------|------|--------|----------|-----------|----------|----------|----------|
+| 1    | 0.625 | 0.00010 | 0.25 | 0.8317 | 0.138459 | -0.023557 | 0.239656 | 0.241357 | 0.074092 |
+| 2    | 0.600 | 0.00010 | 0.00 | 0.8657 | 0.138800 | -0.016444 | 0.229737 | 0.223725 | 0.090080 |
+| 3    | 0.750 | 0.00005 | 0.25 | 0.8697 | 0.138962 | 0.006367  | 0.121789 | 0.381765 | 0.024732 |
+| 4    | 0.775 | 0.00005 | 0.75 | 0.8764 | 0.140155 | 0.006764  | 0.124196 | 0.383149 | 0.021258 |
+| 5    | 0.600 | 0.00010 | 0.25 | 0.8681 | 0.140367 | -0.016027 | 0.230239 | 0.222851 | 0.089623 |
+| 6    | 0.575 | 0.00010 | 0.00 | 0.8646 | 0.140465 | -0.017433 | 0.232398 | 0.225316 | 0.084033 |
+| 7    | 0.850 | 0.00005 | 0.00 | 0.8680 | 0.140480 | 0.004128  | 0.115731 | 0.404868 | 0.012019 |
+| 8    | 0.850 | 0.00005 | 0.75 | 0.8775 | 0.140969 | 0.005941  | 0.122976 | 0.396324 | 0.014580 |
+| 9    | 0.625 | 0.00010 | 0.75 | 0.8723 | 0.141006 | -0.016906 | 0.233909 | 0.227529 | 0.085500 |
+| 10   | 0.900 | 0.00005 | 0.50 | 0.8769 | 0.141029 | 0.006582  | 0.124217 | 0.387385 | 0.019099 |
+
+### Usage Example
+
+```python
+import numpy as np
+import MargModel
+
+# Use the top R² parameter set (Rank 1)
+eta = 0.500
+g0 = 0.00100
+nu = 1.00
+poly_coeffs = [0.101620, -0.322535, 1.073302, -0.221764]
+
+# Simulate forward model
+wavelengths = np.arange(400., 750.)
+chla_true = 5.0
+mineral = 0.5
+aCDOM = 0.02
+
+Rrs = MargModel.runForward(wavelengths, chla_true, mineral, aCDOM,
+                           eta=eta, g0=g0, nu=nu)
+
+# In inverse problem, you would estimate chla from Rrs
+# For demonstration, assume we got a raw estimate
+chla_est = 6.5  # Raw estimate (biased)
+
+# Apply correction
+chla_corrected = MargModel.apply_chla_correction(chla_est, poly_coeffs)
+
+print(f"True Chla: {chla_true:.2f} mg/m³")
+print(f"Raw estimate: {chla_est:.2f} mg/m³")
+print(f"Corrected estimate: {chla_corrected:.2f} mg/m³")
+```
+
+### Notes on Parameter Selection
+
+- **For Chla estimation**: Use parameter sets from "Top 10 by R²" table
+- **For spectral fitting**: Use parameter sets from "Top 10 by RMSE(Rrs)" table
+- The correction coefficients are derived from field validation data (81 stations)
+- Correction is most effective for Chla range: 0.5-50 mg/m³
+
 ## Version History
+
+- **v1.1** (2024-12-31) - Added polynomial correction
+  - Added `apply_chla_correction()` function
+  - Included calibrated polynomial coefficients for top 10 parameter sets
+  - Updated documentation with correction usage examples
 
 - **v1.0** (2024) - Initial standalone release
   - Extracted from K03_optimize_CCRR_RT.py

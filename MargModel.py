@@ -759,3 +759,43 @@ if __name__ == "__main__":
     print("All tests completed successfully!")
     print("=" * 60)
 
+
+def apply_chla_correction(chla_est, poly_coeffs):
+    """
+    Apply 3rd-order polynomial correction to estimated chlorophyll-a in log space.
+    
+    The correction is applied as:
+    log(chla_corrected) = a3*log(chla_est)^3 + a2*log(chla_est)^2 + a1*log(chla_est) + a0
+    
+    Parameters:
+    -----------
+    chla_est : float or array-like
+        Estimated chlorophyll-a concentration (mg/m3)
+    poly_coeffs : array-like
+        Polynomial coefficients [a3, a2, a1, a0]
+        
+    Returns:
+    --------
+    chla_corrected : float or array
+        Corrected chlorophyll-a concentration (mg/m3)
+        
+    Example:
+    --------
+    >>> # Using coefficients from top R2 parameter set (eta=0.5, g0=0.001, nu=1.0)
+    >>> chla_est = 10.0
+    >>> poly_coeffs = [0.101620, -0.322535, 1.073302, -0.221764]
+    >>> chla_corrected = apply_chla_correction(chla_est, poly_coeffs)
+    >>> print(f"Estimated: {chla_est:.2f}, Corrected: {chla_corrected:.2f}")
+    
+    Notes:
+    ------
+    The polynomial coefficients are parameter-set specific and should be obtained
+    from calibration against field measurements. See README.md for recommended
+    coefficient values for different parameter sets.
+    """
+    chla_est = np.asarray(chla_est)
+    log_chla_est = np.log10(chla_est)
+    log_chla_corrected = np.polyval(poly_coeffs, log_chla_est)
+    chla_corrected = 10 ** log_chla_corrected
+    return chla_corrected
+
