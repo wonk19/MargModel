@@ -5,12 +5,12 @@
 `MargModel.py` is a standalone Python module that implements the CCRR-RT (Case 2 Regional CoastColour Radiative Transfer) forward model with chlorophyll fluorescence. This model computes remote sensing reflectance (Rrs) spectra from water quality parameters including chlorophyll-a, suspended minerals, and colored dissolved organic matter (CDOM).
 
 **Key Features:**
-- **Optimized Parameters**: Uses Top RMSE parameters (`eta=0.625, g0=0.0001, nu=0.25`) from 79 field station validation
+- **Optimized Parameters**: Uses Top R² parameters (`eta=0.775, g0=0.0002, nu=1.00`) from 81 field station validation
 - **Advanced Fluorescence Model**: 3rd-order polynomial regression with physical constraint (F=0 at Chla=0.1 mg/m³)
-- **High Accuracy**: RMSE(Rrs) = 0.138 sr⁻¹, validated against field measurements
+- **High Accuracy**: R²(Chla) = 0.933, RMSE(Chla) = 8.26 mg/m³, validated against field measurements
 - **Standalone**: Self-contained module with no external dependencies except numpy and scipy
 
-This module was optimized using the K03-K24 analysis pipeline and validated with 79 field stations from Korean coastal waters.
+This module was optimized using the K03-K24 analysis pipeline and validated with 81 field stations from Korean coastal waters.
 
 ## Requirements
 
@@ -87,7 +87,7 @@ plt.show()
 
 ```python
 Rrs = MargModel.runForward(wavelengths, chla, mineral, aCDOM, 
-                           eta_param=0.625, g0_param=0.0001, nu_param=0.25,
+                           eta_param=0.775, g0_param=0.0002, nu_param=1.00,
                            fresnel_add=0.02, rho_sky=None, sol_zen=30.0,
                            add_fluorescence_flag=True, fluorescence_method='semilog')
 ```
@@ -114,21 +114,21 @@ Rrs = MargModel.runForward(wavelengths, chla, mineral, aCDOM,
   - Typical range: 0.001 - 0.5 (1/m)
   - Controls yellow substance absorption
 
-**Model Parameters (Optimized for Best RMSE):**
+**Model Parameters (Optimized for Best R²):**
 
-- **eta_param** : float, optional (default: 0.625)
+- **eta_param** : float, optional (default: 0.775)
   - Pigment backscattering exponent
-  - Default is Rank 1 RMSE parameter from K24 analysis
+  - Default is Rank 2 R² parameter from K24 analysis
   - Typical range: 0.5 - 1.0
 
-- **g0_param** : float, optional (default: 0.0001)
+- **g0_param** : float, optional (default: 0.0002)
   - Pigment backscattering coefficient
-  - Default is Rank 1 RMSE parameter from K24 analysis
+  - Default is Rank 2 R² parameter from K24 analysis
   - Typical range: 0.00005 - 0.001
 
-- **nu_param** : float, optional (default: 0.25)
+- **nu_param** : float, optional (default: 1.00)
   - Pigment backscattering spectral slope
-  - Default is Rank 1 RMSE parameter from K24 analysis
+  - Default is Rank 2 R² parameter from K24 analysis
   - Typical range: 0.0 - 1.0
 
 - **fresnel_add** : float, optional (default: 0.02)
@@ -191,10 +191,10 @@ This model provides:
 
 ```python
 params = MargModel.getDefaultParameters()
-# Returns: {'eta': 0.625, 'g0': 0.0001, 'nu': 0.25}
+# Returns: {'eta': 0.775, 'g0': 0.0002, 'nu': 1.00}
 ```
 
-Returns the optimized model parameters (Rank 1 RMSE from K24 analysis).
+Returns the optimized model parameters (Rank 2 R² from K24 analysis).
 
 ## Example Use Cases
 
@@ -350,9 +350,11 @@ The CCRR-RT forward model computes Rrs based on inherent optical properties (IOP
 
 ### Model Performance
 
-**Validation Statistics (79 field stations):**
-- RMSE(Rrs): 0.138 sr⁻¹ (best among all parameter sets)
-- R²(Chla): 0.832
+**Validation Statistics (81 field stations):**
+- R²(Chla): 0.933 (Rank 2 among all parameter sets by R²)
+- RMSE(Chla): 8.26 mg/m³ (polynomial corrected)
+- RMSE(Rrs): 0.166 sr⁻¹
+- MNGE(Chla): 38.0%
 - Fluorescence RMSE improvement: 29.6%
 
 **Performance by Chlorophyll Range:**
@@ -391,7 +393,7 @@ The polynomial coefficients are parameter-set specific. Below are the top 10 par
 
 | Rank | eta   | g0      | nu   | R²     | RMSE_Rrs | poly_a3   | poly_a2  | poly_a1  | poly_a0  |
 |------|-------|---------|------|--------|----------|-----------|----------|----------|----------|
-| **1**| **0.625** | **0.00010** | **0.25** | **0.8317** | **0.138459** | **-0.023557** | **0.239656** | **0.241357** | **0.074092** |
+| 1    | 0.625 | 0.00010 | 0.25 | 0.8317 | 0.138459 | -0.023557 | 0.239656 | 0.241357 | 0.074092 |
 | 2    | 0.600 | 0.00010 | 0.00 | 0.8657 | 0.138800 | -0.016444 | 0.229737 | 0.223725 | 0.090080 |
 | 3    | 0.750 | 0.00005 | 0.25 | 0.8697 | 0.138962 | 0.006367  | 0.121789 | 0.381765 | 0.024732 |
 | 4    | 0.775 | 0.00005 | 0.75 | 0.8764 | 0.140155 | 0.006764  | 0.124196 | 0.383149 | 0.021258 |
@@ -402,14 +404,12 @@ The polynomial coefficients are parameter-set specific. Below are the top 10 par
 | 9    | 0.625 | 0.00010 | 0.75 | 0.8723 | 0.141006 | -0.016906 | 0.233909 | 0.227529 | 0.085500 |
 | 10   | 0.900 | 0.00005 | 0.50 | 0.8769 | 0.141029 | 0.006582  | 0.124217 | 0.387385 | 0.019099 |
 
-**Note:** Rank 1 (bold) is the default parameter set used in `runForward()`.
-
 #### Top 10 by R² - Best Chla Estimation Accuracy
 
 | Rank | eta   | g0      | nu   | R²     | RMSE_Rrs | poly_a3   | poly_a2   | poly_a1  | poly_a0   |
 |------|-------|---------|------|--------|----------|-----------|-----------|----------|-----------|
 | 1    | 0.500 | 0.00100 | 1.00 | 0.9390 | 0.175120 | 0.101620  | -0.322535 | 1.073302 | -0.221764 |
-| 2    | 0.775 | 0.00020 | 1.00 | 0.9334 | 0.165825 | 0.085890  | -0.210978 | 0.866397 | -0.164719 |
+| **2**| **0.775** | **0.00020** | **1.00** | **0.9334** | **0.165825** | **0.085890**  | **-0.210978** | **0.866397** | **-0.164719** |
 | 3    | 0.950 | 0.00005 | 1.00 | 0.9332 | 0.145160 | 0.010728  | 0.137408  | 0.352919 | 0.034673  |
 | 4    | 0.650 | 0.00040 | 1.00 | 0.9312 | 0.171452 | 0.083595  | -0.222705 | 0.921967 | -0.201947 |
 | 5    | 0.625 | 0.00040 | 1.00 | 0.9310 | 0.174814 | 0.056867  | -0.099050 | 0.747213 | -0.139404 |
@@ -419,14 +419,16 @@ The polynomial coefficients are parameter-set specific. Below are the top 10 par
 | 9    | 0.675 | 0.00040 | 0.75 | 0.9252 | 0.181476 | 0.066129  | -0.144183 | 0.815283 | -0.164588 |
 | 10   | 0.675 | 0.00040 | 1.00 | 0.9246 | 0.175862 | 0.075362  | -0.181135 | 0.868817 | -0.173960 |
 
+**Note:** Rank 2 (bold) is the default parameter set used in `runForward()`.
+
 ### Usage Example
 
 ```python
 import numpy as np
 import MargModel
 
-# Use the default (Rank 1 RMSE) parameter set
-poly_coeffs = [-0.023557, 0.239656, 0.241357, 0.074092]
+# Use the default (Rank 2 R²) parameter set
+poly_coeffs = [0.085890, -0.210978, 0.866397, -0.164719]
 
 # Simulate forward model
 wavelengths = np.arange(400., 750.)
@@ -450,10 +452,11 @@ print(f"Corrected estimate: {chla_corrected:.2f} mg/m³")
 
 ### Notes on Parameter Selection
 
-- **For spectral fitting (Rrs accuracy)**: Use Rank 1 from "Top 10 by RMSE(Rrs)" table (default)
-- **For chlorophyll estimation (Chla accuracy)**: Use Rank 1 from "Top 10 by R²" table
-- Correction coefficients derived from 79 field station validation
+- **For chlorophyll estimation (Chla accuracy)**: Use Rank 2 from "Top 10 by R²" table (default)
+- **For spectral fitting (Rrs accuracy)**: Use Rank 1 from "Top 10 by RMSE(Rrs)" table
+- Correction coefficients derived from 81 field station validation
 - Most effective for Chla range: 0.5-200 mg/m³
+- Rank 1 by R² may have outliers; Rank 2 provides more robust performance
 
 ## Testing
 
@@ -538,8 +541,14 @@ The recipient can then:
 
 ## Version History
 
-- **v1.2** (2024-12-31) - Updated fluorescence model and default parameters
-  - Updated to Top RMSE parameters: `eta=0.625, g0=0.0001, nu=0.25`
+- **v1.3** (2024-12-31) - Updated default parameters to R² Rank 2
+  - Updated to Top R² parameters: `eta=0.775, g0=0.0002, nu=1.00`
+  - Improved Chla estimation accuracy: R²=0.933, RMSE(Chla)=8.26 mg/m³
+  - Validated with 81 field stations from Korean coastal waters
+  - More robust performance with outlier handling
+  - Polynomial correction coefficients: [0.085890, -0.210978, 0.866397, -0.164719]
+
+- **v1.2** (2024-12-31) - Updated fluorescence model
   - Improved fluorescence model with 3rd-order polynomial regression
   - Added constraint: Fluorescence intensity = 0 at Chla = 0.1 mg/m³
   - New fluorescence coefficients from K06 analysis (79 field stations)
