@@ -288,23 +288,27 @@ def add_fluorescence(lamb, Rrs, chla, method='semilog'):
     Rrs_with_fl : array
         Rrs with fluorescence added (sr^-1)
     """
-    # Regression coefficients from K06 analysis (eta=0.7, g0=0.0002, nu=0.0)
-    # These were derived from 81 field stations
+    # Regression coefficients from K06 analysis (Top RMSE parameters: eta=0.625, g0=0.0001, nu=0.25)
+    # These were derived from 79 field stations with constraint: F(0.1 mg/m3) = 0
     
     if method == 'semilog':
         # Semi-log regression (recommended)
         # Peak wavelength: wl = p_wl * ln(Chla) + q_wl
-        p_wl = 2.807122  # nm per ln(mg/m3)
-        q_wl = 682.998020  # nm
+        p_wl = 4.239291  # nm per ln(mg/m3)
+        q_wl = 678.895348  # nm
         
-        # Fluorescence intensity: F = p_fl * ln(Chla) + q_fl
-        p_fl = 0.00066110  # sr^-1 per ln(mg/m3)
-        q_fl = -0.00111339  # sr^-1
+        # Fluorescence intensity (3rd order polynomial with constraint F(0.1)=0):
+        # F = a3 * ln(Chla)^3 + a2 * ln(Chla)^2 + a1 * ln(Chla) + a0
+        a3_fl = 0.0000102764  # sr^-1 per ln(mg/m3)^3
+        a2_fl = 0.0000551991  # sr^-1 per ln(mg/m3)^2
+        a1_fl = 0.0000666462  # sr^-1 per ln(mg/m3)
+        a0_fl = -0.0000137463  # sr^-1
         
         # Calculate peak wavelength and intensity
         if chla > 0:
-            wl_peak = p_wl * np.log(chla) + q_wl
-            fl_intensity = p_fl * np.log(chla) + q_fl
+            ln_chla = np.log(chla)
+            wl_peak = p_wl * ln_chla + q_wl
+            fl_intensity = a3_fl * ln_chla**3 + a2_fl * ln_chla**2 + a1_fl * ln_chla + a0_fl
         else:
             wl_peak = 685.0
             fl_intensity = 0.0
@@ -468,7 +472,7 @@ def get_ccrr_rrs_rt(lamb, chla, mine, cdom, fresnel_add, wl_sky, rho_sky, sol_ze
 
 
 def runForward(wavelengths, chla, mineral, aCDOM, 
-               eta_param=0.7, g0_param=0.0002, nu_param=0.0,
+               eta_param=0.625, g0_param=0.0001, nu_param=0.25,
                fresnel_add=0.02, rho_sky=None, sol_zen=30.0,
                add_fluorescence_flag=True, fluorescence_method='semilog'):
     """
@@ -585,13 +589,13 @@ def runForward(wavelengths, chla, mineral, aCDOM,
 
 def getDefaultParameters():
     """
-    Get default model parameters.
+    Get default model parameters (Top RMSE parameters from K24 analysis).
     
     Returns:
     --------
     dict : Dictionary containing default eta, g0, nu values
     """
-    return {'eta': 0.7, 'g0': 0.0002, 'nu': 0.0}
+    return {'eta': 0.625, 'g0': 0.0001, 'nu': 0.25}
 
 
 if __name__ == "__main__":

@@ -485,6 +485,15 @@ print(f"Corrected estimate: {chla_corrected:.2f} mg/m³")
 
 ## Version History
 
+- **v1.2** (2024-12-31) - Updated fluorescence model and default parameters
+  - Updated to Top RMSE parameters: `eta=0.625, g0=0.0001, nu=0.25`
+  - Improved fluorescence model with 3rd-order polynomial regression
+  - Added constraint: Fluorescence intensity = 0 at Chla = 0.1 mg/m³
+  - New fluorescence coefficients from K06 analysis (79 field stations)
+  - Fluorescence peak: `wl = 4.239 * ln(Chla) + 678.895`
+  - Fluorescence intensity: `F = 0.0000103 * ln³(Chla) + 0.0000552 * ln²(Chla) + 0.0000666 * ln(Chla) - 0.0000137`
+  - Better performance at high Chla concentrations (>75 mg/m³)
+
 - **v1.1** (2024-12-31) - Added polynomial correction
   - Added `apply_chla_correction()` function
   - Included calibrated polynomial coefficients for top 10 parameter sets
